@@ -8,10 +8,16 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - run: |
-          set -euo pipefail
-          grep -c ' || Best Uncensored AI Models | ' data/archive.md
-          sed -i 's/ || Best Uncensored AI Models | / |\n| Best Uncensored AI Models | /' data/archive.md
+          set -eu
+          echo "lines containing '||':"
+          grep -c '||' data/archive.md || true
+          grep -n -o '.\{40\}||.\{40\}' data/archive.md | head -5 || true
+          echo "--- last 200 bytes of archive.md ---"
+          tail -c 200 data/archive.md | cat -A
+          echo
+          sed -i 's/ || / |\n| /g' data/archive.md
           if [ -n "$(tail -c1 data/archive.md)" ]; then echo >> data/archive.md; fi
+          if git diff --quiet; then echo "no change made"; exit 0; fi
           git config user.name "github-actions"
           git config user.email "actions@users.noreply.github.com"
           git add data/archive.md
