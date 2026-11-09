@@ -13,10 +13,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-      - name: Debug README
-        run: |
-          echo "--- first 8 lines, shown with markers ---"
-          head -n 8 README.md | cat -A
       - name: Move rows to archive
         run: |
           set -euo pipefail
