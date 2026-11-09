@@ -1,0 +1,32 @@
+name: Archive README rows
+on:
+  schedule:
+    - cron: "30 23 * * *"   # 05:00 IST
+  workflow_dispatch:
+concurrency:
+  group: archive
+  cancel-in-progress: false
+permissions:
+  contents: write
+jobs:
+  archive:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Move rows to archive
+        run: |
+          set -euo pipefail
+          mkdir -p data
+          tr -d '\r' < README.md > /tmp/clean.md
+          N=$(grep -n -m1 -E '^\| *Dummy row' /tmp/clean.md | cut -d: -f1)
+          head -n "$N" /tmp/clean.md > /tmp/readme.new
+          tail -n +"$((N+1))" /tmp/clean.md | sed '/^[[:space:]]*$/d' > /tmp/rows.txt
+          [ -s /tmp/rows.txt ] || { echo "nothing to move"; exit 0; }
+          [ -f data/archive.md ] || grep -m2 '^|' /tmp/clean.md > data/archive.md
+          cat /tmp/rows.txt >> data/archive.md
+          mv /tmp/readme.new README.md
+          git config user.name "github-actions"
+          git config user.email "actions@users.noreply.github.com"
+          git add README.md data/archive.md
+          git commit -m "Archive $(wc -l < /tmp/rows.txt) lines"
+          git push
